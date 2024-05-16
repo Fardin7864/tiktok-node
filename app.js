@@ -1,27 +1,35 @@
 const express = require('express');
 const axios = require('axios');
 const multer = require('multer');
-const { getAuthUrl, getAccessToken } = require('./auth');
+const fs = require('fs');
+const cookieParser = require('cookie-parser');
+const FormData = require('form-data');
+const { getAuthUrl, getAccessToken, generateToken, verifyToken } = require('./auth');
 require('dotenv').config();
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
-// Middleware to serve static files
-app.use(express.static('public'));
+app.use(cookieParser());
+app.use('/public', express.static('public'));
 
 app.get('/auth', (req, res) => {
     res.redirect(getAuthUrl());
 });
 
-app.get('/auth/callback', async (req, res) => {
+app.get('/', async (req, res) => {
     const { code } = req.query;
-    try {
-        const accessToken = await getAccessToken(code);
-        req.session.accessToken = accessToken;
-        res.redirect('/');
-    } catch (error) {
-        res.status(500).send('Authentication failed');
+    if (code) {
+        try {
+            const accessToken = await getAccessToken(code);
+            const token = generateToken({ accessToken });
+            res.cookie('jwt', token, { httpOnly: true });
+            res.redirect('/public/index.html');
+        } catch (error) {
+            res.status(500).send('Authentication failed');
+        }
+    } else {
+        res.redirect('/public/index.html');
     }
 });
 
@@ -30,12 +38,15 @@ app.post('/post', upload.single('video'), async (req, res) => {
         return res.status(400).send('No file uploaded.');
     }
 
-    const accessToken = req.session.accessToken;
-    if (!accessToken) {
+    const token = req.cookies.jwt;
+    const payload = verifyToken(token);
+
+    if (!payload) {
         return res.status(401).send('User not authenticated');
     }
 
     try {
+        const { accessToken } = payload;
         const videoPath = req.file.path;
         const formData = new FormData();
         formData.append('video', fs.createReadStream(videoPath));
