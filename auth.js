@@ -1,4 +1,5 @@
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const getAuthUrl = () => {
@@ -19,4 +20,16 @@ const getAccessToken = async (code) => {
     return response.data.data.access_token;
 };
 
-module.exports = { getAuthUrl, getAccessToken };
+const generateToken = (data) => {
+    return jwt.sign(data, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
+const verifyToken = (token) => {
+    try {
+        return jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+        return null;
+    }
+};
+
+module.exports = { getAuthUrl, getAccessToken, generateToken, verifyToken };
