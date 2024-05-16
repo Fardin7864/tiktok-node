@@ -31,7 +31,7 @@
   "env": {
     "TOC_CLIENT_ID": "aw8qpdtvf1dnzjfg",
     "TOC_CLIENT_SECRET": "5a06UfxVMkSemV04k6oSuQHZVspZH4F0",
-    "TOC_REDIRECT_URI": "https://tiktok-node.vercel.app/",
+    "TOC_REDIRECT_URI": "https://everyone.tmmadevs.xyz",
     "JWT_SECRET": "@secret"
   }
 }
